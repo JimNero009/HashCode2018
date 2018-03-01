@@ -2,14 +2,15 @@ import sys
 from copy import deepcopy
 
 class RideController:
+
     def __init__(self, rideList, rows, cols, vehicles, numRides, bonus, steps):
+        self.bonus = bonus
         self.rideList = sorted(self.convertToRides(rideList))
         self.rows = rows
         self.cols = cols
         self.numRides = numRides
-        self.bonus = bonus
         self.steps = steps
-        self.vehicles = [Car(i+1) for i in range(vehicles)]
+        self.vehicles = [Car() for i in range(vehicles)]
 
     def __str__(self):
         output = '''
@@ -26,30 +27,34 @@ class RideController:
     def assignCarsToRides(self):
         copiedRideList = deepcopy(self.rideList)
         for car in self.vehicles:
-            ride_ids = []
-            while canTakeRides: #TODO
+            breakout = False
+            while copiedRideList and not breakout:
+                copiedRideList = self.sortRidesByLucrativity(car, copiedRideList)
+                ride_ids = []
                 for ride in copiedRideList:
-                    if car.attemptToAssignBonusRide(ride):
+                    # print(ride)
+                    # print(ride.lucrativity)
+                    if car.attemptToAssignRide(ride):
+                        # print('Assigned {}!'.format(ride.id))
                         ride_ids.append(ride.id)
-                    #if car.attemptToAssignRide(ride):
-                    #    ride_ids.append(ride.id)
-            copiedRideList = self.removeRidesFromList(ride_ids, copiedRideList)
-            if not copiedRideList:
-                break
+                        break
+                    if ride == copiedRideList[-1]:
+                        breakout = True
+                copiedRideList = self.removeRidesFromList(ride_ids, copiedRideList)
+            # print('*******')
         return self.vehicles
 
     def sortRidesByLucrativity(self,car,unsortedRideList):
         for ride in unsortedRideList:
-            ride.lucrativity = ride.calcLucrativity(car,ride)
-        return sorted(unsortedRideList)
+            ride.lucrativity = ride.calcLucrativity(car)
+        return sorted(unsortedRideList, reverse=True)
 
     @staticmethod
     def removeRidesFromList(ride_ids, rideList):
         return [ride for ride in rideList if ride.id not in ride_ids]
 
 
-    @staticmethod
-    def convertToRides(rideList):
+    def convertToRides(self, rideList):
         newRideList = []
         id = 0
         for ride in rideList:
@@ -58,7 +63,8 @@ class RideController:
                 Point(ride[1], ride[3]),
                 ride[4],
                 ride[5],
-                id
+                id,
+                self.bonus
             )
             id += 1
             newRideList.append(newRide)
@@ -71,27 +77,29 @@ class Car: # should have id
         self.assignedRides = []
         self.inUse = False
 
-    def attemptToAssignBonusRide(self, ride):
-        if self.time + ride.rideLength > ride.earliestTime:
-            #ride will not get bonus
-            return False
-        time = ride.earliestTime + ride.rideLength
-        position = ride.endPoint
-        if time >= ride.latestTime:
-            return False
-        self.assignedRides.append(ride)
-        self.time = time
-        self.position = position
-        return True
+    # def attemptToAssignBonusRide(self, ride):
+    #     if self.time + ride.rideLength > ride.earliestTime:
+    #         #ride will not get bonus
+    #         return False
+    #     time = ride.earliestTime + ride.rideLength
+    #     position = ride.endPoint
+    #     if time >= ride.latestTime:
+    #         return False
+    #     self.assignedRides.append(ride)
+    #     self.time = time
+    #     self.position = position
+    #     return True
 
     def attemptToAssignRide(self, ride):
         time = max(ride.earliestTime + ride.rideLength,
             self.time + ride.rideLength + (self.position - ride.startPoint))
         position = ride.endPoint
+        # print('I am at {}'.format(self.time))
         if time >= ride.latestTime:
             return False
         self.assignedRides.append(ride)
         self.time = time
+        # print('I am now at {}'.format(self.time))
         self.position = position
         return True
 
@@ -118,7 +126,8 @@ class Point:
 
 
 class Ride:
-    def __init__(self, startPoint, endPoint, earliestTime, latestTime, id):
+    def __init__(self, startPoint, endPoint, earliestTime, latestTime, id, bonus):
+        self.bonus = bonus
         self.startPoint = startPoint
         self.endPoint = endPoint
         self.earliestTime = earliestTime
