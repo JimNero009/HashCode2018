@@ -1,9 +1,8 @@
 import sys
 
-
 class RideController:
     def __init__(self, rideList, rows, cols, vehicles, numRides, bonus, steps):
-        self.rideList = rideList
+        self.rideList = self.convertToRides(rideList)
         self.rows = rows
         self.cols = cols
         self.numRides = numRides
@@ -23,12 +22,58 @@ class RideController:
         '''.format(self.rows, self.cols, self.vehicles, self.numRides, self.bonus, self.steps, self.rideList)
         return output
 
+    @staticmethod
+    def convertToRides(rideList):
+        newRideList = []
+        for ride in rideList:
+            newRide = Ride(
+                Point(ride[0], ride[2]),
+                Point(ride[1], ride[3]),
+                ride[4],
+                ride[5]
+            )
+            newRideList.append(newRide)
+        return newRideList
+
 class Car:
-    pass
+    def __init__(self):
+        self.assignedRides = []
+
+    def assignRide(self, ride):
+        self.assignedRides.append(ride)
 
 
-class Route:
-    pass
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __str__(self):
+        return '({}, {})'.format(self.x, self.y)
+
+    def __sub__(self, other):
+        return abs(other.x - self.x) + abs(other.y - self.y)
+
+
+class Ride:
+    def __init__(self, startPoint, endPoint, earliestTime, latestTime):
+        self.startPoint = startPoint
+        self.endPoint = endPoint
+        self.earliestTime = earliestTime
+        self.latestTime = latestTime
+        self.rideLength = self.lengthOfRide()
+
+    def __str__(self):
+        return "start: {}, end: {}, earliestTime: {}, latestTime: {}, rideLength: {}".format(
+            self.startPoint,
+            self.endPoint,
+            self.earliestTime,
+            self.latestTime,
+            self.rideLength
+        )
+
+    def lengthOfRide(self):
+        return self.endPoint - self.startPoint
 
 
 def readInput():
@@ -56,7 +101,8 @@ def writeOutput(solution):
 
 def main():
     rideController = readInput()
-    print(rideController)
+    for i in range(len(rideController.rideList)):
+        print(rideController.rideList[i])
     # Magic here...
     solution = 'Hooray!'
     writeOutput(solution)
