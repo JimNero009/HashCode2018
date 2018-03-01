@@ -5,7 +5,7 @@ from random import randint
 
 class Pizza():
 
-    ITERATION_LIMIT = 100
+    ITERATION_LIMIT = 500
 
     def __init__(self, grid, maxSliceSize, minIngredients):
         self.grid = grid
@@ -16,13 +16,17 @@ class Pizza():
         self.available_shapes = self.generate_shapes()
         self.possibleLocations = []
 
+    def reset(self):
+        self.grid = deepcopy(self.initialGrid)
+        self.slices = []
+        self.possibleLocations = []
+
     def generate_shapes(self):
         shapes = []
         for i in range(1, self.maxSliceSize + 1):
             for j in range(1, self.maxSliceSize + 1):
                 if i*j <= self.maxSliceSize:
                     shapes.append((i, j))
-                    #shapes.append((-i, -j))
         return shapes
 
     def findBest(self):
@@ -32,28 +36,31 @@ class Pizza():
     def get_random_shape(self):
         return self.available_shapes[randint(0, len(self.available_shapes) - 1)]
 
-    def get_random_available_location(self):
+    def get_possible_locations(self):
         possible = []
         for i in range(len(self.grid)):
             for j in range(len(self.grid[0])):
                 if self.grid[i][j] != 'X':
                     possible.append((i, j))
-        self.possibleLocations = possible
+        return possible
+
+    def get_random_available_location(self):
+        possible = self.get_possible_locations()       
         return possible[randint(0, len(possible) - 1)]
 
-    def possible_to_slice():
-        return bool(self.possibleLocations)
+    def possible_to_slice(self):
+        return len(self.get_possible_locations()) > 0
 
     def greedyApproach(self):
         for i in range(self.ITERATION_LIMIT):
             location = self.get_random_available_location()
             shape = self.get_random_shape()
-            slice = Slice(location[0], location[1], location[0] + shape[0], location[1] + shape[1])
+            slice = Slice(location[0], location[1], location[0] + (shape[0] - 1), location[1] + (shape[1] - 1))
             if slice.isValidSlice(self.grid, self.minIngredients):
                 self.slices.append(slice)
                 self.cutSlice(slice)           
 
-            if not self.possible_to_slice:
+            if not self.possible_to_slice():
                 break
 
 
@@ -95,8 +102,8 @@ class Slice():
             return False
         countT = 0
         countM = 0
-        for row in range(self.coords[0], self.coords[2]):
-            for col in range(self.coords[1], self.coords[3]):
+        for row in range(self.coords[0], self.coords[2] + 1):
+            for col in range(self.coords[1], self.coords[3] + 1):
                 if pizzaGrid[row][col] == 'T':
                     countT += 1
                 elif pizzaGrid[row][col] == 'M':
@@ -141,12 +148,18 @@ def writeFile(outputFilepath, slices):
 
 def main():
     pizza = readFile(sys.argv[1])
+    soln = []
+    currentScore = -1
 
-    # Some awesome algorithm here
-    pizza.greedyApproach()
-    print(pizza.calculateScore())
+    for i in range(1000):
+        pizza.greedyApproach()
+        score = pizza.calculateScore()
+        if score > currentScore:
+            soln = deepcopy(pizza.slices)
+            currentScore = score
+        pizza.reset()
 
-    writeFile(sys.argv[2], pizza.slices)
+    writeFile(sys.argv[2], soln)
 
 
 if __name__ == '__main__':
