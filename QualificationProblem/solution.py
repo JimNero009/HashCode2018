@@ -38,9 +38,17 @@ class RideController:
 class Car:
     def __init__(self):
         self.assignedRides = []
+        self.inUse = False
 
     def assignRide(self, ride):
         self.assignedRides.append(ride)
+
+    def isInUse(self):
+        return self.inUse
+
+    def switchInUse(self):
+        self.inUse = not self.inUse
+    
 
 
 class Point:
@@ -62,14 +70,18 @@ class Ride:
         self.earliestTime = earliestTime
         self.latestTime = latestTime
         self.rideLength = self.lengthOfRide()
+        self.latestStartTime = self.latestTime - self.rideLength - 1
+        self.earliestArrivalTime = self.earliestTime + self.rideLength + 1
 
     def __str__(self):
-        return "start: {}, end: {}, earliestTime: {}, latestTime: {}, rideLength: {}".format(
+        return "start: {}, end: {}, earliestTime: {}, latestTime: {}, rideLength: {}, latestStartTime: {}, earliestArrivalTime: {}".format(
             self.startPoint,
             self.endPoint,
             self.earliestTime,
             self.latestTime,
-            self.rideLength
+            self.rideLength,
+            self.latestStartTime,
+            self.earliestArrivalTime
         )
 
     def lengthOfRide(self):
