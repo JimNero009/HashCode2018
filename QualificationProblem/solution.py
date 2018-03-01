@@ -1,6 +1,18 @@
 import sys
 
 
+class RouteMap:
+    pass
+
+
+class Car:
+    pass
+
+
+class Route:
+    pass
+
+
 def readInput():
     '''
     Read input and parse according to structure
