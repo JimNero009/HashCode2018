@@ -5,7 +5,7 @@ from random import randint
 
 class Pizza():
 
-    ITERATION_LIMIT = 500
+    ITERATION_LIMIT = 1000
 
     def __init__(self, grid, maxSliceSize, minIngredients):
         self.grid = grid
@@ -151,7 +151,7 @@ def main():
     soln = []
     currentScore = -1
 
-    for i in range(1000):
+    for i in range(3):
         pizza.greedyApproach()
         score = pizza.calculateScore()
         if score > currentScore:
