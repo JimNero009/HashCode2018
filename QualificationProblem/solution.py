@@ -27,15 +27,21 @@ class RideController:
         copiedRideList = deepcopy(self.rideList)
         for car in self.vehicles:
             ride_ids = []
-            for ride in copiedRideList:
-                if car.attemptToAssignBonusRide(ride):
-                    ride_ids.append(ride.id)
-                #if car.attemptToAssignRide(ride):
-                #    ride_ids.append(ride.id)
+            while canTakeRides: #TODO
+                for ride in copiedRideList:
+                    if car.attemptToAssignBonusRide(ride):
+                        ride_ids.append(ride.id)
+                    #if car.attemptToAssignRide(ride):
+                    #    ride_ids.append(ride.id)
             copiedRideList = self.removeRidesFromList(ride_ids, copiedRideList)
             if not copiedRideList:
                 break
         return self.vehicles
+
+    def sortRidesByLucrativity(self,car,unsortedRideList):
+        for ride in unsortedRideList:
+            ride.lucrativity = ride.calcLucrativity(car,ride)
+        return sorted(unsortedRideList)
 
     @staticmethod
     def removeRidesFromList(ride_ids, rideList):
@@ -59,12 +65,11 @@ class RideController:
         return newRideList
 
 class Car: # should have id
-    def __init__(self, id):
+    def __init__(self):
         self.position = Point(0, 0)
         self.time = 0
         self.assignedRides = []
         self.inUse = False
-        self.id = id
 
     def attemptToAssignBonusRide(self, ride):
         if self.time + ride.rideLength > ride.earliestTime:
@@ -122,6 +127,7 @@ class Ride:
         self.latestStartTime = self.latestTime - self.rideLength - 1
         self.earliestArrivalTime = self.earliestTime + self.rideLength + 1
         self.id = id
+        self.lucrativity = self.calcLucrativity(Car())
 
     def __str__(self):
         return "start: {}, end: {}, earliestTime: {}, latestTime: {}, rideLength: {}, latestStartTime: {}, earliestArrivalTime: {}".format(
@@ -134,14 +140,26 @@ class Ride:
             self.earliestArrivalTime
         )
 
+    def calcLucrativity(self,car):
+        lucrativity = 0
+        dist = car.position - self.startPoint
+        if car.time + dist <= self.earliestTime:
+            lucrativity += self.bonus
+            deadtime = self.earliestTime - car.time
+        else:
+            deadtime = dist
+        lucrativity += self.rideLength
+        lucrativity -= deadtime
+        return lucrativity
+
     def lengthOfRide(self):
         return self.endPoint - self.startPoint
 
     def __gt__(self, other):
-        return self.earliestTime >= other.earliestTime
+        return self.lucrativity >= other.lucrativity
 
     def __lt__(self, other):
-        return self.earliestTime < other.earliestTime
+        return self.lucrativity < other.lucrativity
 
 
 
