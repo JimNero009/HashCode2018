@@ -28,8 +28,10 @@ class RideController:
         for car in self.vehicles:
             ride_ids = []
             for ride in copiedRideList:
-                if car.attemptToAssignRide(ride):
+                if car.attemptToAssignBonusRide(ride):
                     ride_ids.append(ride.id)
+                #if car.attemptToAssignRide(ride):
+                #    ride_ids.append(ride.id)
             copiedRideList = self.removeRidesFromList(ride_ids, copiedRideList)
             if not copiedRideList:
                 break
@@ -64,10 +66,22 @@ class Car: # should have id
         self.inUse = False
         self.id = id
 
+    def attemptToAssignBonusRide(self, ride):
+        if self.time + ride.rideLength > ride.earliestTime:
+            #ride will not get bonus
+            return False
+        time = ride.earliestTime + ride.rideLength
+        position = ride.endPoint
+        if time >= ride.latestTime:
+            return False
+        self.assignedRides.append(ride)
+        self.time = time
+        self.position = position
+        return True
+
     def attemptToAssignRide(self, ride):
         time = max(ride.earliestTime + ride.rideLength,
-            self.time + ride.rideLength + (self.position - ride.startPoint)
-        )
+            self.time + ride.rideLength + (self.position - ride.startPoint))
         position = ride.endPoint
         if time >= ride.latestTime:
             return False
@@ -83,7 +97,7 @@ class Car: # should have id
         self.inUse = not self.inUse
 
 
-    
+
 
 
 class Point:
@@ -135,7 +149,7 @@ def readInput():
     '''
     Read input and parse according to structure
     '''
-    with open(sys.argv[1], 'r') as inputFile:  
+    with open(sys.argv[1], 'r') as inputFile:
         fullFile = inputFile.read().split('\n')
 
     rows, cols, vehicles, numRides, bonus, steps = [int(x) for x in fullFile[0].split(' ')]
