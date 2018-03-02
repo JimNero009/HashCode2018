@@ -31,17 +31,20 @@ class RideController:
             while copiedRideList and not breakout:
                 copiedRideList = self.sortRidesByLucrativity(car, copiedRideList)
                 ride_ids = []
-                for ride in copiedRideList:
+                for i,ride in enumerate(copiedRideList):
                     # print(ride)
-                    # print(ride.lucrativity)
+                    # print ride.lucrativity
                     if car.attemptToAssignRide(ride):
                         # print('Assigned {}!'.format(ride.id))
                         ride_ids.append(ride.id)
                         break
+                    #if i == 2:
+                    #    breakout = True
                     if ride == copiedRideList[-1]:
                         breakout = True
                 copiedRideList = self.removeRidesFromList(ride_ids, copiedRideList)
-            # print('*******')
+            #print('*******')
+            #break
         return self.vehicles
 
     def sortRidesByLucrativity(self,car,unsortedRideList):
@@ -59,8 +62,8 @@ class RideController:
         id = 0
         for ride in rideList:
             newRide = Ride(
-                Point(ride[0], ride[2]),
-                Point(ride[1], ride[3]),
+                Point(ride[0], ride[1]),
+                Point(ride[2], ride[3]),
                 ride[4],
                 ride[5],
                 id,
@@ -77,28 +80,33 @@ class Car: # should have id
         self.assignedRides = []
         self.inUse = False
 
-    # def attemptToAssignBonusRide(self, ride):
-    #     if self.time + ride.rideLength > ride.earliestTime:
-    #         #ride will not get bonus
-    #         return False
-    #     time = ride.earliestTime + ride.rideLength
-    #     position = ride.endPoint
-    #     if time >= ride.latestTime:
-    #         return False
-    #     self.assignedRides.append(ride)
-    #     self.time = time
-    #     self.position = position
-    #     return True
-
-    def attemptToAssignRide(self, ride):
-        time = max(ride.earliestTime + ride.rideLength,
-            self.time + ride.rideLength + (self.position - ride.startPoint))
-        position = ride.endPoint
-        # print('I am at {}'.format(self.time))
-        if time >= ride.latestTime:
+    def attemptToAssignBonusRide(self, ride):
+        if self.time + ride.rideLength > ride.earliestTime:
+            #ride will not get bonus
+            #TODO check this logic
             return False
+        time = ride.earliestTime + ride.rideLength
+        position = ride.endPoint
+        if time >= ride.latestTime:
+         return False
         self.assignedRides.append(ride)
         self.time = time
+        self.position = position
+        return True
+
+    def attemptToAssignRide(self, ride):
+        #endtime = max(ride.earliestTime + ride.rideLength, self.time + ride.rideLength + (self.position - ride.startPoint))
+        dist = self.position - ride.startPoint
+        timeatstart = self.time + dist #this is the time we will get to the start point
+        starttime = max(timeatstart,ride.earliestTime) #this is the time we will start the journey
+        endtime = starttime + ride.rideLength
+        position = ride.endPoint
+        # print('I am at {}'.format(self.time))
+        if endtime > ride.latestTime:
+            #this should ensure we don't take rides we won't get paid for
+            return False
+        self.assignedRides.append(ride)
+        self.time = endtime
         # print('I am now at {}'.format(self.time))
         self.position = position
         return True
@@ -139,7 +147,8 @@ class Ride:
         self.lucrativity = self.calcLucrativity(Car())
 
     def __str__(self):
-        return "start: {}, end: {}, earliestTime: {}, latestTime: {}, rideLength: {}, latestStartTime: {}, earliestArrivalTime: {}".format(
+        return "id: {}, start: {}, end: {}, earliestTime: {}, latestTime: {}, rideLength: {}, latestStartTime: {}, earliestArrivalTime: {}".format(
+            self.id,
             self.startPoint,
             self.endPoint,
             self.earliestTime,
@@ -158,7 +167,7 @@ class Ride:
         else:
             deadtime = dist
         lucrativity += self.rideLength
-        lucrativity -= deadtime
+        #lucrativity -= deadtime*0.1
         return lucrativity
 
     def lengthOfRide(self):
